@@ -16,6 +16,10 @@ use app\models\ValidarFormularioAjax;
 use yii\widgets\ActiveForm;
 use yii\web\Response;
 
+///5
+use app\models\FormAlumnos;
+use app\models\Alumnos;
+
 class SiteController extends Controller
 {
     
@@ -92,8 +96,50 @@ class SiteController extends Controller
         }
         return $this->render("validarformularioajax", ['model' => $model, 'msg' => $msg]);
     }
+    
+    //////////5 Insertar en BD
 
-
+    public function actionCreate() {
+        $model = new FormAlumnos;
+        $msg = null;
+        $color = null;
+        if($model->load(Yii::$app->request->post()))
+        {
+            if($model->validate())
+            {
+                $table = new Alumnos();
+                $table->nombre = $model->nombre;
+                $table->apellidos = $model->apellidos;
+                $table->clase = $model->clase;
+                $table->nota_final = $model->nota_final;
+                
+                if($table->insert())
+                {
+                    $msg = "Enhorabuena registro guardado correctamente";
+                    $color = "text-success";
+                    $model->nombre = null;
+                    $model->apellidos = null;
+                    $model->clase = null;
+                    $model->nota_final = null;
+                    
+                }
+                else
+                {
+                    $msg = "Ha ocurrido un error al insertar el registro";
+                    $color = "text-danger";
+                }
+                
+                
+            }
+            else
+            {
+                $model->getErrors();
+            }
+        }
+        return $this->render("create", ['model' => $model, 'msg' => $msg, 'color' => $color]);
+    }
+    
+    
 
     public function behaviors()
     {
