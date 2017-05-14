@@ -24,6 +24,8 @@ use app\models\Alumnos;
 use app\models\FormSearch;
 use yii\helpers\Html;
 
+use app\models\metodosAlumnos;
+
 
 class SiteController extends Controller
 {
@@ -115,15 +117,17 @@ class SiteController extends Controller
             if($model->validate())
             {
                 $table = new Alumnos();
+                $metodos = new metodosAlumnos();
                 
-               
+                $count = $metodos->validarAlumnos($table,$model->nombre,$model->apellidos,$model->clase,$model->nota_final);
+                /*
                 $count = $table->find()
                 ->where(['nombre' => $model->nombre,
                     'apellidos' => $model->apellidos,
                     'clase' => $model->clase,
                     'nota_final' => $model->nota_final])
                 ->count();
-                
+                */
                 
                 if($count > 0){
                     $msg = "El registro ya existe";
@@ -131,12 +135,18 @@ class SiteController extends Controller
                 }
                 else 
                 {
+                    $result = $metodos->registrarAlumnos($table,$model->nombre,$model->apellidos,$model->clase,$model->nota_final);
+                    
+                    /*
                     $table->nombre = $model->nombre;
                     $table->apellidos = $model->apellidos;
                     $table->clase = $model->clase;
                     $table->nota_final = $model->nota_final;
+                    $table->insert()
+                    */
+                    
                 
-                        if($table->insert())
+                        if($result > 0)
                         {
                         $msg = "Enhorabuena registro guardado correctamente";
                         $color = "text-success";
@@ -170,6 +180,7 @@ class SiteController extends Controller
     public function actionView() 
     {
         $table = new Alumnos;
+        $metodos = new metodosAlumnos();
         $model = $table->find()->all();
         
         $form = new FormSearch;
@@ -179,9 +190,12 @@ class SiteController extends Controller
             if($form->validate())
             {
                 $search = Html::encode($form->q);
+                /*
                 $query = "SELECT * FROM alumnos WHERE id_alumno LIKE '%$search%' OR ";
                 $query .="nombre LIKE '%$search%' OR apellidos LIKE '%$search%'";
                 $model = $table->findBySql($query)->all();
+                 */
+                $model = $metodos->buscarAlumnos($table,$search);
             }
             else
             {
