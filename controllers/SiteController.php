@@ -108,31 +108,54 @@ class SiteController extends Controller
         $model = new FormAlumnos;
         $msg = null;
         $color = null;
+        $count = null;
+        
         if($model->load(Yii::$app->request->post()))
         {
             if($model->validate())
             {
                 $table = new Alumnos();
-                $table->nombre = $model->nombre;
-                $table->apellidos = $model->apellidos;
-                $table->clase = $model->clase;
-                $table->nota_final = $model->nota_final;
                 
-                if($table->insert())
-                {
-                    $msg = "Enhorabuena registro guardado correctamente";
-                    $color = "text-success";
-                    $model->nombre = null;
-                    $model->apellidos = null;
-                    $model->clase = null;
-                    $model->nota_final = null;
-                    
-                }
-                else
-                {
-                    $msg = "Ha ocurrido un error al insertar el registro";
+               
+                $count = $table->find()
+                ->where(['nombre' => $model->nombre,
+                    'apellidos' => $model->apellidos,
+                    'clase' => $model->clase,
+                    'nota_final' => $model->nota_final])
+                ->count();
+                
+                
+                if($count > 0){
+                    $msg = "El registro ya existe";
                     $color = "text-danger";
                 }
+                else 
+                {
+                    $table->nombre = $model->nombre;
+                    $table->apellidos = $model->apellidos;
+                    $table->clase = $model->clase;
+                    $table->nota_final = $model->nota_final;
+                
+                        if($table->insert())
+                        {
+                        $msg = "Enhorabuena registro guardado correctamente";
+                        $color = "text-success";
+                        $model->nombre = null;
+                        $model->apellidos = null;
+                        $model->clase = null;
+                        $model->nota_final = null;
+                    
+                        }
+                        else
+                        {
+                        $msg = "Ha ocurrido un error al insertar el registro";
+                        $color = "text-danger";
+                        }
+                     
+                     
+                }
+                
+                
                 
             }
             else
