@@ -8,22 +8,27 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
-// 3
+
+// 3 validacion 
 use app\models\ValidarFormulario;
 
-///4
+///4 validacion ajax
 use app\models\ValidarFormularioAjax;
 use yii\widgets\ActiveForm;
 use yii\web\Response;
 
-///5
+///5 crear registros
 use app\models\FormAlumnos;
 use app\models\Alumnos;
 
-///6
+///6 busqueda y lectura de registros
 use app\models\FormSearch;
 use yii\helpers\Html;
 
+///7 paginacion
+use yii\data\Pagination;
+
+/// metodos y consultas
 use app\models\metodosAlumnos;
 
 
@@ -179,6 +184,49 @@ class SiteController extends Controller
     ////6 consultar y buscar en BD
     public function actionView() 
     {
+        $form = new FormSearch;
+        $search = null;
+        $metodos = new metodosAlumnos();
+        $alumnos = new Alumnos;
+        
+        if($form->load(Yii::$app->request->get()))
+        {
+            if ($form->validate())
+            {
+                if($form->q == '')
+                {
+                $table = $metodos->consultarAlumnos($alumnos);
+                $table_clone = clone $table;
+                $count = $table_clone->count();
+                $pages = $metodos->paginacion(5, $count);
+                $model = $metodos->buscarAlumnosPaginacion($table, $pages);
+                }
+                else
+                {
+                $search = Html::encode($form->q);
+                $table = $metodos->buscarAlumnos($alumnos,$search);
+                $table_clone = clone $table;
+                $count = $table_clone->count();
+                $pages = $metodos->paginacion(2,$count);
+                $model = $metodos->buscarAlumnosPaginacion($table, $pages); 
+                }
+            }
+            else
+            {
+                $form->getErrors();
+            }
+        }
+        else
+        {
+                $table = $metodos->consultarAlumnos($alumnos);
+                $table_clone = clone $table;
+                $count = $table_clone->count();
+                $pages = $metodos->paginacion(5, $count);
+                $model = $metodos->buscarAlumnosPaginacion($table, $pages);
+        }
+        
+        
+        /*
         $table = new Alumnos;
         $metodos = new metodosAlumnos();
         $model = $table->find()->all();
@@ -190,11 +238,7 @@ class SiteController extends Controller
             if($form->validate())
             {
                 $search = Html::encode($form->q);
-                /*
-                $query = "SELECT * FROM alumnos WHERE id_alumno LIKE '%$search%' OR ";
-                $query .="nombre LIKE '%$search%' OR apellidos LIKE '%$search%'";
-                $model = $table->findBySql($query)->all();
-                 */
+                
                 $model = $metodos->buscarAlumnos($table,$search);
             }
             else
@@ -202,7 +246,9 @@ class SiteController extends Controller
                 $form->getErrors();
             }
         }
-        return $this->render("view", ['model' => $model, 'form' => $form, 'search' => $search]);
+         */
+        
+        return $this->render("view", ['model' => $model, 'form' => $form, 'search' => $search, "pages" => $pages]);
     }
 
     public function behaviors()
