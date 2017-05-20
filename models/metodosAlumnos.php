@@ -9,22 +9,24 @@ use yii\data\Pagination;
 
 Class metodosAlumnos extends ActiveRecord{
     
-    public function validarAlumnos($tabla,$nombre,$apellidos,$clase,$nota_final) {
+    public function validarAlumnos($tabla, $model) {
         $count = $tabla->find()
-                ->where(['nombre' => $nombre,
-                    'apellidos' => $apellidos,
-                    'clase' => $clase,
-                    'nota_final' => $nota_final])
+                ->where(['nombre' => $model->nombre,
+                    'apellidos' => $model->apellidos,
+                    'clase' => $model->clase,
+                    'nota_final' => $model->nota_final])
                 ->count();
         return $count;
     }
     
-    public function registrarAlumnos($tabla,$nombre,$apellidos,$clase,$nota_final) {
-        $tabla->nombre = $nombre;
-        $tabla->apellidos = $apellidos;
-        $tabla->clase = $clase;
-        $tabla->nota_final = $nota_final;
-        $result = $tabla->insert();
+    public function registrarAlumnos($tabla, $model) {
+        
+        $tabla->nombre = $model->nombre;
+        $tabla->apellidos = $model->apellidos;
+        $tabla->clase = $model->clase;
+        $tabla->nota_final = $model->nota_final;
+        $result->insert();
+        
         return $result;
     }
     
@@ -37,7 +39,7 @@ Class metodosAlumnos extends ActiveRecord{
         
     }
     */
-    public function buscarAlumnos($tabla,$search) {
+    public function buscarAlumnos($tabla, $search) {
         $result = $tabla::find()
                         ->where(["like","id_alumno", $search])
                         ->orWhere(["like","nombre", $search])
@@ -46,7 +48,7 @@ Class metodosAlumnos extends ActiveRecord{
         
     }
     
-    public function paginacion($numero,$total) {
+    public function paginacion($numero, $total) {
          $pages = new Pagination([
                     "pageSize" => $numero,
                     "totalCount" => $total
@@ -54,7 +56,7 @@ Class metodosAlumnos extends ActiveRecord{
                 return $pages;
     }
     
-    public function buscarAlumnosPaginacion($tabla,$paginas) {
+    public function buscarAlumnosPaginacion($tabla, $paginas) {
         $result = $tabla
                         ->offset($paginas->offset)
                         ->limit($paginas->limit)
@@ -68,13 +70,32 @@ Class metodosAlumnos extends ActiveRecord{
         return $result;
     }
     
-    public function eliminarAlumnos($tabla,$id) {
+    public function eliminarAlumnos($tabla, $id) {
         $result = $tabla::deleteAll("id_alumno=:id_alumno", [":id_alumno" => $id]);
         return $result;
     }
     
+    public function buscarModificarAlumnos($tabla, $id) {
+        $result = $tabla::findOne($id);
+        return $result;
+    }
     
+    public function mostrarModificarAlumnos($tabla, $model) {
+        $model->id_alumno = $tabla->id_alumno;
+        $model->nombre = $tabla->nombre;
+        $model->apellidos = $tabla->apellidos;
+        $model->clase = $tabla->clase;
+        $model->nota_final = $tabla->nota_final;
+        return $model;
+    }
     
-    
+    public function ModificarAlumnos($tabla, $model) {
+        $tabla->nombre = $model->nombre;
+        $tabla->apellidos = $model->apellidos;
+        $tabla->clase = $model->clase;
+        $tabla->nota_final = $model->nota_final;
+        $result = $tabla->update();
+        return $result;
+    }
 }
 

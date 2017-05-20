@@ -127,7 +127,7 @@ class SiteController extends Controller
                 $table = new Alumnos();
                 $metodos = new metodosAlumnos();
                 
-                $count = $metodos->validarAlumnos($table,$model->nombre,$model->apellidos,$model->clase,$model->nota_final);
+                $count = $metodos->validarAlumnos($table,$model);
                 /*
                 $count = $table->find()
                 ->where(['nombre' => $model->nombre,
@@ -143,7 +143,7 @@ class SiteController extends Controller
                 }
                 else 
                 {
-                    $result = $metodos->registrarAlumnos($table,$model->nombre,$model->apellidos,$model->clase,$model->nota_final);
+                    $result = $metodos->registrarAlumnos($table,$model);
                     
                     /*
                     $table->nombre = $model->nombre;
@@ -254,6 +254,8 @@ class SiteController extends Controller
         return $this->render("view", ['model' => $model, 'form' => $form, 'search' => $search, "pages" => $pages]);
     }
 
+    
+    /// 8 borrar en BD
     public function actionDelete() {
         if (Yii::$app->request->post())
         {
@@ -286,6 +288,98 @@ class SiteController extends Controller
             return $this->redirect(["site/view"]);
         }
     }
+    
+    
+    /// 9 Modificar BD
+    public function actionUpdate() 
+    {
+        $alumnos = new Alumnos;
+        $metodos = new metodosAlumnos();
+        $model = new FormAlumnos;
+        $msg = null;
+        $color = null;
+        
+        if($model->load(Yii::$app->request->post()))
+        {
+            if($model->validate())
+            {
+                
+                $table = $metodos->buscarModificarAlumnos($alumnos, $model->id_alumno);
+               
+                
+                if($table)
+                {
+                    /*
+                    $table->nombre = $model->nombre;
+                    $table->apellidos = $model->apellidos;
+                    $table->clase = $model->clase;
+                    $table->nota_final = $model->nota_final;
+                  */
+                    $result = $metodos->ModificarAlumnos($table, $model);
+                    if($result)
+                    {
+                        $msg = "El alumno ha sido actualizado correctamente";
+                        $color = "text-success";
+                    }
+                    else
+                    {
+                        $msg = "El Alumno no ha podido ser actualizado";
+                        $color = "text-danger";
+                    }
+                    
+                }
+                else 
+                {
+                    $msg = "El alumno seleccionado no ha sido encontrado";
+                    $color = "text-danger";
+                }
+            }
+            else
+            {
+                $model->getErrors();
+            }
+        }
+        
+        if(Yii::$app->request->get("id_alumno"))
+        {
+            $id_alumno = Html::encode($_GET["id_alumno"]);
+            if ((int) $id_alumno)
+            {
+                
+                $table = $metodos->buscarModificarAlumnos($alumnos, $id_alumno);
+                
+                if($table)
+                {
+                    
+                    $model = $metodos->mostrarModificarAlumnos($table, $model);
+                    
+                    /*
+                    $model->id_alumno = $table->id_alumno;
+                    $model->nombre = $table->nombre;
+                    $model->apellidos = $table->apellidos;
+                    $model->clase = $table->clase;
+                    $model->nota_final = $table->nota_final;
+                    */
+                }
+                else 
+                {
+                    return $this->redirect(["site/view"]);
+                }
+            }
+            else
+            {
+                return $this->redirect(["site/view"]);
+            }
+        }
+        else 
+        {
+            return $this->redirect(["site/view"]);
+        }
+        return $this->render("update", ["model" => $model, "msg" => $msg, "color" => $color]);
+    }
+    
+    
+    
     
     public function behaviors()
     {
