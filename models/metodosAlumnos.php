@@ -68,6 +68,13 @@ Class metodosAlumnos extends ActiveRecord{
         return $result;
     }
     
+    public function eliminarAlumnos($tabla,$id) {
+        $result = $tabla::deleteAll("id_alumno=:id_alumno", [":id_alumno" => $id]);
+        return $result;
+    }
+    
+    
+    
     
 }
 

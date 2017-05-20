@@ -38,13 +38,35 @@ use yii\widgets\LinkPager;
     </tr>
     <?php foreach ($model as $row): ?>
     <tr>
-        <th><?= $row->id_alumno ?></th>
-        <th><?= $row->nombre ?></th>
-        <th><?= $row->apellidos ?></th>
-        <th><?= $row->clase ?></th>
-        <th><?= $row->nota_final ?></th>
-        <th><a href="#">Editar</a></th>
-        <th><a href="#">Eliminar</a></th>
+        <td><?= $row->id_alumno ?></td>
+        <td><?= $row->nombre ?></td>
+        <td><?= $row->apellidos ?></td>
+        <td><?= $row->clase ?></td>
+        <td><?= $row->nota_final ?></td>
+        <td><a href="#">Editar</a></td>
+        <td>
+            <a href="#" data-toggle="modal" data-target="#id_alumno_<?= $row->id_alumno ?>">Eliminar</a>
+            <div class="modal fade" role="dialog" aria-hidden="true" id="id_alumno_<?= $row->id_alumno ?>">
+                      <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                    <h4 class="modal-title">Eliminar alumno</h4>
+                              </div>
+                              <div class="modal-body">
+                                    <p>¿Realmente deseas eliminar al alumno con id <?= $row->id_alumno ?>?</p>
+                              </div>
+                              <div class="modal-footer">
+                              <?= Html::beginForm(Url::toRoute("site/delete"), "POST") ?>
+                                    <input type="hidden" name="id_alumno" value="<?= $row->id_alumno ?>">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                    <button type="submit" class="btn btn-primary">Eliminar</button>
+                              <?= Html::endForm() ?>
+                              </div>
+                            </div><!-- /.modal-content -->
+                      </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+        </td>
     </tr>
     <?php endforeach ?>
 </table>

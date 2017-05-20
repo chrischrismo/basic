@@ -28,6 +28,9 @@ use yii\helpers\Html;
 ///7 paginacion
 use yii\data\Pagination;
 
+///8 eliminar con redireccionamiento
+use yii\helpers\Url;
+
 /// metodos y consultas
 use app\models\metodosAlumnos;
 
@@ -181,7 +184,7 @@ class SiteController extends Controller
         return $this->render("create", ['model' => $model, 'msg' => $msg, 'color' => $color]);
     }
     
-    ////6 consultar y buscar en BD
+    ////6 consultar y buscar en BD, 7 paginacion
     public function actionView() 
     {
         $form = new FormSearch;
@@ -251,6 +254,39 @@ class SiteController extends Controller
         return $this->render("view", ['model' => $model, 'form' => $form, 'search' => $search, "pages" => $pages]);
     }
 
+    public function actionDelete() {
+        if (Yii::$app->request->post())
+        {
+            $alumnos = new Alumnos;
+            $metodos = new metodosAlumnos();
+            $id_alumno = Html::encode($_POST["id_alumno"]);
+            
+            if((int) $id_alumno)
+            {
+            
+                if($metodos->eliminarAlumnos($alumnos, $id_alumno))
+                {
+                    echo ("Alumno con id $id_alumno eliminado con éxito, redireccionando ...");
+                    echo ("<meta http-equiv='refresh' content='3; ".Url::toRoute("site/view")."'>");
+                }
+                else
+                {
+                echo ("Ha ocurrido un error al eliminar el alumno, redireccionando ...");
+                echo ("<meta http-equiv='refresh' content='3; ".Url::toRoute("site/view")."'>");
+                }
+            }
+            else 
+            {
+                echo ("Ha ocurrido un error al eliminar el alumno, redireccionando ...");
+                echo ("<meta http-equiv='refresh' content='3; ".Url::toRoute("site/view")."'>");
+            }
+        }
+        else 
+        {
+            return $this->redirect(["site/view"]);
+        }
+    }
+    
     public function behaviors()
     {
         return [
