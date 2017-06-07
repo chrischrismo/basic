@@ -36,8 +36,14 @@ use yii\helpers\Url;
 use app\models\FormRegister;
 use app\models\Users;
 
+//13 recuperar password de usuarios
+use yii\web\Session;
+use app\models\FormRecoverPass;
+use app\models\FormResetPass;
+
 /// metodos y consultas
 use app\models\metodosAlumnos;
+use app\models\metodosUsuarios;
 
 
 class SiteController extends Controller
@@ -522,6 +528,173 @@ class SiteController extends Controller
   return $this->render("register", ["model" => $model, "msg" => $msg]);
  }
     
+ 
+ 
+ 
+  ///// 13 recuperar password de usuarios
+    
+    public function actionRecoverpass()
+ {
+  //Instancia para validar el formulario
+  $model = new FormRecoverPass;
+  $users = new Users;
+  $metodos = new metodosUsuarios();
+  
+  //Mensaje que será mostrado al usuario en la vista
+  $msg = null;
+  
+  if ($model->load(Yii::$app->request->post()))
+  {
+   if ($model->validate())
+   {
+    //Buscar al usuario a través del email
+    $table = $metodos->buscarEmailUsuario($users, $model->email);
+    
+    //$table = Users::find()->where("email=:email", [":email" => $model->email]);
+    
+    //Si el usuario existe
+    if ($table->count() == 1)
+    {
+     //Crear variables de sesión para limitar el tiempo de restablecido del password
+     //hasta que el navegador se cierre
+     $session = new Session;
+     $session->open();
+     
+     //Esta clave aleatoria se cargará en un campo oculto del formulario de reseteado
+     $session["recover"] = $this->randKey("abcdef0123456789", 200);
+     $recover = $session["recover"];
+     
+     //También almacenaremos el id del usuario en una variable de sesión
+     //El id del usuario es requerido para generar la consulta a la tabla users y 
+     //restablecer el password del usuario
+     $table = $metodos->buscarEmailIdUsuario($users, $model->email);
+     //$table = Users::find()->where("email=:email", [":email" => $model->email])->one();
+     $session["id_recover"] = $table->id;
+     
+     //Esta variable contiene un número hexadecimal que será enviado en el correo al usuario 
+     //para que lo introduzca en un campo del formulario de reseteado
+     //Es guardada en el registro correspondiente de la tabla users
+     $verification_code = $this->randKey("abcdef0123456789", 8);
+     //Columna verification_code
+     $table->verification_code = $verification_code;
+     //Guardamos los cambios en la tabla users
+     $table->save();
+     
+     //Creamos el mensaje que será enviado a la cuenta de correo del usuario
+     $subject = "Recuperar password";
+     $body = "<p>Copie el siguiente código de verificación para restablecer su password ... ";
+     $body .= "<strong>".$verification_code."</strong></p>";
+     $body .= "<p><a href='http://localhost:8080/basic/web/index.php?r=site/resetpass'>Recuperar password</a></p>";
+
+     //Enviamos el correo
+     Yii::$app->mailer->compose()
+     ->setTo($model->email)
+     ->setFrom([Yii::$app->params["adminEmail"] => Yii::$app->params["title"]])
+     ->setSubject($subject)
+     ->setHtmlBody($body)
+     ->send();
+     
+     //Vaciar el campo del formulario
+     $model->email = null;
+     
+     //Mostrar el mensaje al usuario
+     $msg = "Le hemos enviado un mensaje a su cuenta de correo para que pueda resetear su password";
+    }
+    else //El usuario no existe
+    {
+     $msg = "Ha ocurrido un error";
+    }
+   }
+   else
+   {
+    $model->getErrors();
+   }
+  }
+  return $this->render("recoverpass", ["model" => $model, "msg" => $msg]);
+ }
+ 
+ public function actionResetpass()
+ {
+  //Instancia para validar el formulario
+  $model = new FormResetPass;
+  $users = new Users;
+  $metodos = new metodosUsuarios();
+  //Mensaje que será mostrado al usuario
+  $msg = null;
+  
+  //Abrimos la sesión
+  $session = new Session;
+  $session->open();
+  
+  //Si no existen las variables de sesión requeridas lo expulsamos a la página de inicio
+  if (empty($session["recover"]) || empty($session["id_recover"]))
+  {
+   return $this->redirect(["site/index"]);
+  }
+  else
+  {
+   
+   $recover = $session["recover"];
+   //El valor de esta variable de sesión la cargamos en el campo recover del formulario
+   $model->recover = $recover;
+   
+   //Esta variable contiene el id del usuario que solicitó restablecer el password
+   //La utilizaremos para realizar la consulta a la tabla users
+   $id_recover = $session["id_recover"];
+   
+  }
+  
+  //Si el formulario es enviado para resetear el password
+  if ($model->load(Yii::$app->request->post()))
+  {
+   if ($model->validate())
+   {
+    //Si el valor de la variable de sesión recover es correcta
+    if ($recover == $model->recover)
+    {
+     //Preparamos la consulta para resetear el password, requerimos el email, el id 
+     //del usuario que fue guardado en una variable de session y el código de verificación
+     //que fue enviado en el correo al usuario y que fue guardado en el registro
+     $table = $metodos->buscarEmailIdVerificacionUsuario($users, $model->email, $id_recover, $model->verification_code);
+     //$table = Users::findOne(["email" => $model->email, "id" => $id_recover, "verification_code" => $model->verification_code]);
+     
+     //Encriptar el password
+     $table->password = crypt($model->password, Yii::$app->params["salt"]);
+     
+     //Si la actualización se lleva a cabo correctamente
+     if ($table->save())
+     {
+      
+      //Destruir las variables de sesión
+      $session->destroy();
+      
+      //Vaciar los campos del formulario
+      $model->email = null;
+      $model->password = null;
+      $model->password_repeat = null;
+      $model->recover = null;
+      $model->verification_code = null;
+      
+      $msg = "Enhorabuena, password reseteado correctamente, redireccionando a la página de login ...";
+      $msg .= "<meta http-equiv='refresh' content='5; ".Url::toRoute("site/login")."'>";
+     }
+     else
+     {
+      $msg = "Ha ocurrido un error";
+     }
+     
+    }
+    else
+    {
+     $model->getErrors();
+    }
+   }
+  }
+  
+  return $this->render("resetpass", ["model" => $model, "msg" => $msg]);
+  
+ }
+ 
     ////////
     
     public function behaviors()
