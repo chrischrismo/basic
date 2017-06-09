@@ -41,6 +41,9 @@ use yii\web\Session;
 use app\models\FormRecoverPass;
 use app\models\FormResetPass;
 
+//14 usuarios user y admin
+use app\models\User;
+
 /// metodos y consultas
 use app\models\metodosAlumnos;
 use app\models\metodosUsuarios;
@@ -695,22 +698,57 @@ class SiteController extends Controller
   
  }
  
-    ////////
-    
-    public function behaviors()
+ 
+ ///////14 tipos de usuario user y admin
+ 
+ public function actionUser() {
+     return $this->render("user");
+ }
+ 
+ public function actionAdmin() {
+     return $this->render("admin");
+ }
+ 
+ 
+ public function behaviors()
     {
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout'],
+                'only' => ['logout', 'user', 'admin'],
                 'rules' => [
                     [
-                        'actions' => ['logout'],
+                        //El administrador tiene permisos sobre las siguientes acciones
+                        'actions' => ['logout', 'admin'],
+                        //Esta propiedad establece que tiene permisos
                         'allow' => true,
+                        //Usuarios autenticados, el signo ? es para invitados
                         'roles' => ['@'],
+                        //Este método nos permite crear un filtro sobre la identidad del usuario
+                        //y así establecer si tiene permisos o no
+                        'matchCallback' => function ($rule, $action) {
+                            //Llamada al método que comprueba si es un administrador
+                            return User::isUserAdmin(Yii::$app->user->identity->id);
+                        },
                     ],
+                    [
+                       //Los usuarios simples tienen permisos sobre las siguientes acciones
+                       'actions' => ['logout', 'user'],
+                       //Esta propiedad establece que tiene permisos
+                       'allow' => true,
+                       //Usuarios autenticados, el signo ? es para invitados
+                       'roles' => ['@'],
+                       //Este método nos permite crear un filtro sobre la identidad del usuario
+                       //y así establecer si tiene permisos o no
+                       'matchCallback' => function ($rule, $action) {
+                          //Llamada al método que comprueba si es un usuario simple
+                          return User::isUserSimple(Yii::$app->user->identity->id);
+                      },
+                   ],
                 ],
             ],
+     //Controla el modo en que se accede a las acciones, en este ejemplo a la acción logout
+     //sólo se puede acceder a través del método post
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
@@ -719,6 +757,52 @@ class SiteController extends Controller
             ],
         ];
     }
+    
+    /**
+     * Login action.
+     *
+     * @return string
+     */
+    
+    public function actionLogin()
+    {
+        if (!Yii::$app->user->isGuest) { // si el usuario no es un invitado
+            
+            if(User::isUserAdmin(Yii::$app->user->identity->id))
+            {
+                return $this->redirect(["site/admin"]);
+            }
+            else 
+            {
+                return $this->redirect(["site/user"]);
+            }
+        }
+
+        $model = new LoginForm();
+        if($model->load(Yii::$app->request->post()) && $model->login()){
+            
+            if(User::isUserAdmin(Yii::$app->user->identity->id))
+            {
+                return $this->redirect(["site/admin"]);
+            }
+            else 
+            {
+                return $this->redirect(["site/user"]);
+            }
+            
+        }
+        else 
+        {
+            return $this->render('login', [
+                'model' => $model,
+            ]);
+        }
+    }
+ 
+ 
+    ////////
+    
+    
 
     /**
      * @inheritdoc
@@ -746,25 +830,8 @@ class SiteController extends Controller
         return $this->render('index');
     }
 
-    /**
-     * Login action.
-     *
-     * @return string
-     */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) { // si el usuario no es un invitado
-            return $this->goHome();
-        }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-        return $this->render('login', [
-            'model' => $model,
-        ]);
-    }
+    
+    
 
     /**
      * Logout action.
