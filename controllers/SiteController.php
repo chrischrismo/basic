@@ -832,7 +832,68 @@ class SiteController extends Controller
         return $this->render("upload", ["model" => $model , "msg" => $msg]);
     }
     
+    /////////16  Descarga de archivos
     
+    private function downloadFile($dir, $file, $extensions=[]) 
+    {
+    //Si el directorio existe
+        if(is_dir($dir))
+        {
+            // ruta absoluta del archivo
+            $path = $dir.$file;
+            
+            //si el archivo existe
+            if(is_file($path))
+            {
+                //obtener informacion del archivo
+                $file_info = pathinfo($path);
+                //obtener la extension del archivo
+                $extension = $file_info["extension"];
+                
+                if (is_array($extensions))
+                {
+                    //si el argumento $extension es un array 
+                    //comprobar las extensiones permitidas
+                    foreach ($extensions as $e)
+                    {
+                        //si la extension es correcta
+                        if ($e === $extension)
+                        {
+                            //Procedemos a descargar el archivo
+                            // definir headers
+                            $size = filesize($path);
+                            header("Content-Type: application/force-download");
+                            header("Content-Disposition: attachment; filename=$file");
+                            header("Content-Transfer-Encoding: binary");
+                            header("Content-Length: " . $size);
+                            //descargar archivo
+                            readfile($path);
+                            //correcto
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        //ha ocurrido un error al descargar el archivo
+        return false;
+    }
+    
+    
+    public function actionDownload() {
+        if(Yii::$app->request->get("file"))
+        {
+            //si el archivo no se ha podido descargar
+            //downloadFile($dir, $file, $extensions=[])
+            if(!$this->downloadFile("archivos/", Html::encode($_GET["file"]),["pdf", "txt", "doc"]))
+            {
+                //mensaje flash para mostrar el error
+                Yii::$app->session->setFlash("errordownload");
+            }
+        }
+        return $this->render("download");
+    }
     
     ////////
     
