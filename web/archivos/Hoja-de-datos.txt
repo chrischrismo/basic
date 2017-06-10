@@ -1,0 +1,12 @@
+hoja de datos 
+
+-- Nombre completo de la Unidad Productiva o Social (EMPRESA): 
+-- Dirección
+-- Teléfono:
+-- Nombre y cargo del representante: 
+-- Nombre del asesor externo: 
+-- Nombre del proyecto : pagina web grupo sm
+
+
+
+esos son los datos. 

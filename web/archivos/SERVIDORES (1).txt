@@ -1,0 +1,11 @@
+Servidores DNS Google:       
+Primario:         8.8.8.8
+                             
+Secundario:       8.8.4.4
+
+
+
+Servidores DNS OpenDNS:      
+Primario:         208.67.222.222
+                             
+Secundario: 	   208.67.220.220

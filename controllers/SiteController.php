@@ -44,6 +44,12 @@ use app\models\FormResetPass;
 //14 usuarios user y admin
 use app\models\User;
 
+//15 subida de archivos
+use app\models\FormUpload;
+use yii\web\UploadedFile;
+
+
+
 /// metodos y consultas
 use app\models\metodosAlumnos;
 use app\models\metodosUsuarios;
@@ -800,6 +806,34 @@ class SiteController extends Controller
     }
  
  
+    
+    /////////15  subida de archivos
+    
+    public function actionUpload() {
+        $model = new FormUpload();
+        $msg = null;
+        
+        if($model->load(Yii::$app->request->post()))
+        {
+            $model->file = UploadedFile::getInstances($model, 'file');
+            //para un input file simple
+            //$model->file = UploadedFile::getInstance($model, 'file');
+            //$file = $model->file;
+            //$file->saveAs(...);
+            
+            
+            if($model->file && $model->validate()){
+                foreach ($model->file as $file){
+                    $file->saveAs('archivos/' . $file->baseName . '.' . $file->extension);
+                    $msg = "<p><strong class='label label-info'>Enhorabuena, subida realizada con exito</strong></p>";
+                }
+            }
+        }
+        return $this->render("upload", ["model" => $model , "msg" => $msg]);
+    }
+    
+    
+    
     ////////
     
     
