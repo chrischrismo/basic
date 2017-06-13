@@ -25,7 +25,7 @@ Class metodosAlumnos extends ActiveRecord{
         $tabla->apellidos = $model->apellidos;
         $tabla->clase = $model->clase;
         $tabla->nota_final = $model->nota_final;
-        $result->insert();
+        $result = $tabla->insert();
         
         return $result;
     }
